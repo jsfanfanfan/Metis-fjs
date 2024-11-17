@@ -1,0 +1,35 @@
+{
+    "IP1": {
+      "instance_type": "2080",
+      "inter_bandwidth": 312500000.0,
+      "intra_bandwidth": 5312500000.0,
+      "memory": 8
+    },
+    "IP2": {
+      "instance_type": "2080ti",
+      "inter_bandwidth": 312500000.0, 
+      "intra_bandwidth": 5312500000.0,
+      "memory": 11
+    },
+    "IP3": {
+      "instance_type": "3090",
+      "inter_bandwidth": 312500000.0,
+      "intra_bandwidth": 5312500000.0,
+      "memory": 24
+    },
+    "IP4": {
+      "instance_type": "3090",
+      "inter_bandwidth": 312500000.0,
+      "intra_bandwidth": 5312500000.0,
+      "memory": 24
+    },
+    "IP5": {
+      "instance_type": "3090",
+      "inter_bandwidth": 312500000.0,
+      "intra_bandwidth": 5312500000.0,
+      "memory": 24
+    }
+  }
+
+节点之间：312500000 * 8 = 2.5 GB/s
+节点之内：5312500000 * 8 = 42.5 GB/s

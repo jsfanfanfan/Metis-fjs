@@ -21,6 +21,7 @@ def cost_het_cluster(args: argparse.Namespace, gpu_cluster: GPUCluster, profile_
                      cost_estimator: HeteroCostEstimator, layer_load_balancer:LayerLoadBalancer) -> List[Tuple]:
 
     estimate_costs = []
+    # plan.py 100 行
     for inter_stage_plan in InterStagePlanGenerator(device_types=set(gpu_cluster.get_device_types()),
                                                     num_devices=gpu_cluster.get_total_num_devices(),
                                                     gbs=args.gbs, num_layers=args.num_layers,
@@ -28,9 +29,10 @@ def cost_het_cluster(args: argparse.Namespace, gpu_cluster: GPUCluster, profile_
                                                     max_permute_len=args.max_permute_len):
 
         print(f'\n\ninter_stage_plan: {inter_stage_plan}')
+        # device_group.py
         stage_performance = StagePerformance(model_config, profile_data, gpu_cluster, inter_stage_plan)
         rank_device_map = stage_performance.get_device_placement()
-
+        # plan.py 178 行
         intra_stage_plan_generator = IntraStagePlanGenerator(inter_stage_plan, stage_performance, layer_load_balancer,
                                                              args.max_profiled_tp_degree, args.max_profiled_batch_size)
 
@@ -50,23 +52,27 @@ def cost_het_cluster(args: argparse.Namespace, gpu_cluster: GPUCluster, profile_
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    gpu_cluster = GPUCluster(hostfile_path=args.hostfile_path, clusterfile_path=args.clusterfile_path)
-
+    args = parse_args() # arguments.py 获取基本参数
+    # 返回一个 GPUCluster 类
+    gpu_cluster = GPUCluster(hostfile_path=args.hostfile_path, clusterfile_path=args.clusterfile_path) # GPU 集群信息
+    # data_loader.py 获取 profiled 的信息
     data_loader = ProfileDataLoader(args.profile_data_path)
+    # 返回 profile_data 和 设备类型
     profile_data, _ = data_loader.load_profile_data_all()
     print(profile_data)
 
     assert len(profile_data.keys()) > 0, 'There is no profiled data at the specified path.'
-
+    # utils.py 72行
     model_config = ModelConfig(model_name=args.model_name, num_layers=args.num_layers,
                                sequence_length=args.sequence_length, vocab_size=args.vocab_size,
                                hidden_size=args.hidden_size, attention_head_size=args.attention_head_size)
-
+    # activation_parameter.py 初始化 GPT 激活和参数，返回一个类
     model_volume = GPTActivationAndParam(model_config, profile_data['model']['parameters'])
+    # cost_estimator.py 返回一个 HeteroCostEstimator 类
     cost_estimator = HeteroCostEstimator(profile_data, model_config, model_volume, gpu_cluster)
+    # load_balancer.py
     layer_load_balancer = LayerLoadBalancer(gpu_cluster, profile_data, model_config, args.gbs)
-
+    # 调用 20 行的函数
     estimate_costs = cost_het_cluster(args, gpu_cluster, profile_data, model_config, cost_estimator, layer_load_balancer)
 
     print(f'len(costs): {len(estimate_costs)}')

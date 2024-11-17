@@ -1,16 +1,16 @@
 # Copyright 2024 Samsung Electronics Co., Ltd. All Rights Reserved
 #!/bin/bash
-
+# 工作目录切换到脚本的目录下
 cd "$(dirname $"0")"
 
-for ARGUMENT in "$@"
+for ARGUMENT in "$@" # 遍历每一个传入的参数
 do
-   KEY=$(echo $ARGUMENT | cut -f1 -d=)
+   KEY=$(echo $ARGUMENT | cut -f1 -d=) # 提取出参数的 key
 
-   KEY_LENGTH=${#KEY}
-   VALUE="${ARGUMENT:$KEY_LENGTH+1}"
+   KEY_LENGTH=${#KEY} # 获取字符串长度
+   VALUE="${ARGUMENT:$KEY_LENGTH+1}" # 使用字符串切片提取 value
 
-   export "$KEY"="$VALUE"
+   export "$KEY"="$VALUE" # 设置环境变量
 done
 
 model_options="
@@ -60,10 +60,11 @@ hetspeed_options="
                     --min_group_scale_variance=${SCALE_VARIANCE}
                     --max_permute_len=${MAX_PERMUTE_LEN}
                  "
-
+# &> 是 Bash 的一个输出重定向操作符，用于将 标准输出（stdout） 和 标准错误（stderr） 都重定向到同一个文件中
 run_cmd="python3 ../cost_het_cluster.py ${model_options} ${model_specific_options} ${cluster_options} ${hetspeed_options} ${env_options}
          &> ${LOG_PATH}/${MODEL_NAME}_${MODEL_SIZE}_${current_time}.log"
 
 echo ${run_cmd}
 eval ${run_cmd}
+# set +x 关闭追踪，避免不必要的调试信息被打印出来，保持输出的简洁性
 set +x

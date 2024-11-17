@@ -141,14 +141,14 @@ class HomoCostEstimator(CostEstimator):
 class HeteroCostEstimator(CostEstimator):
     def __init__(self, profile_data: Dict, model_config: ModelConfig, model_volume, gpu_cluster: GPUCluster):
         super().__init__(profile_data, model_config, model_volume, gpu_cluster)
-
+    # 获取部分层参数更新优化器需要的时间
     def _get_specific_parameter_update_cost(self, optimizer_time: float, tp_deg: int, num_layers: int) -> float:
         ratio = num_layers / self.model_config.num_layers
         return optimizer_time / tp_deg * ratio
-
+    # 获取 start-end 这几层的计算时间
     def _get_execution_time(self, device_type: str, key: str, start_layer_id: int, end_layer_id: int) -> float:
         return sum(self.profile_data[f'DeviceType.{device_type}'][key]['time']['layer-computes'][start_layer_id:end_layer_id])
-
+    # 获取 start-end 这几层在给定 intra-stage 策略下在异构设备组上的执行时间
     def _get_hetero_device_group_execution_time(self, device_types: List[str], intra_strategy: Tuple[int, int],
                                                 hetero_bs: List[int], start_layer_id: int, end_layer_id: int) -> List[float]:
         args = parse_args()
@@ -171,7 +171,7 @@ class HeteroCostEstimator(CostEstimator):
             execution_costs.append(inner_dp_cost)
 
         return execution_costs
-
+    # 获取执行开销
     def _get_execution_cost(self, device_types: List[str], start_layer_id: int, end_layer_id:int,
                             intra_strategy: Tuple[int, int], gbs: int, batches: int) -> float:
         dp_deg, tp_deg = intra_strategy
@@ -195,13 +195,13 @@ class HeteroCostEstimator(CostEstimator):
             execution_costs = self._get_hetero_device_group_execution_time(device_types, intra_strategy, hetero_bs,
                                                                            start_layer_id, end_layer_id)
             return max(execution_costs)
-
+    # 得到最终的 cost
     def get_cost(self, plan: InterStagePlan, strategies: List[Tuple[int, int]], layer_partition: List[int],
                  rank_device_map: Dict[int, str]) -> float:
         print(f'node_sequence: {plan.node_sequence}, device_group: {plan.device_groups}, num_stage: {plan.num_stage}, '
               f'batches: {plan.batches}, gbs: {plan.gbs}, strategies: {strategies}, '
               f'layer_partition: {layer_partition}')
-
+        # cluster_bandwidth.py 71
         cluster_bandwidth = HetClusterBandwidth(self.gpu_cluster, plan)
 
         lens = []

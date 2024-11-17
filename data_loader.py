@@ -35,7 +35,7 @@ class ProfileDataLoader:
         profile_data['memory'] = raw_data['execution_memory']['layer_memory_total_mb']
 
         return profile_data
-
+    # 获取所有 profile data 数据
     def load_profile_data_all(self) -> Tuple[Dict, List]:
         profile_data = dict()
         device_types = []

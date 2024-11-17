@@ -155,7 +155,7 @@ To measure the execution time of each layer, we use **PyTorch's Hook functions.*
 #### Implementation Steps
 1. Register hooks for each layer to record the start and end times of the forward and backward passes. 
 2. Calculate the time difference between the start and end times to measure the execution time of each layer. 
-3. For accurate measurement, call **torch.cuda.synchronize()** before recording the time. This ensures that any asynchronous GPU operations are completed, reducing timing discrepancies.
+3. For accurate measurement, call **torch.cuda.synchronize()** before recording the time. This ensures that any asynchronous(异步) GPU operations are completed, reducing timing discrepancies(差异).
 **Note**: For more details on how to add hooks, refer to the [PyTorch official documentation.](https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.register_forward_pre_hook)
 
 #### Tips for Accurate Performance Measurement
@@ -166,13 +166,13 @@ Memory usage can be measured using torch.cuda.max_memory_reserved, which returns
  
 #### Implementation Steps
 1. After each layer's execution, call **torch.cuda.max_memory_reserved()** to record the maximum memory used during that layer. 
-2. For more accurate memory measurements, allocate **one layer per device**, allowing independent measurement of each layer's memory usage. 
+2. For more accurate memory measurements, allocate **one layer per device(每个设备放一层更精确)**, allowing independent measurement of each layer's memory usage. 
 
 #### Specifics of Memory Measurement
 - **Device Allocation**: If the same layer is repeated multiple times, it's possible to assign multiple layers to the same device and measure the total memory usage. Ideally, having sufficient GPU resources allocate each layer to a separate device will provide more precise measurements, but in cases where resources are limited, measuring multiple layers on one device is still a valid approach.
 
 ### 4. Measuring Key Metrics
-This project used Megatron's Timer module to collect key metrics. The Timer module precisely measures the time spent in different stages of the training process, especially during parameter updates. 
+This project used Megatron's Timer module（使用 Megatron 的 Timers 模块） to collect key metrics. The Timer module precisely measures the time spent in different stages of the training process, especially during parameter updates. 
 
 #### Key Metrics
 - **forward_backward_time**

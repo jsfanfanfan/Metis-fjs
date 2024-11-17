@@ -19,24 +19,24 @@ class GPTActivationAndParam:
         self.num_layers = model_config.num_layers
         self.vocab_size = model_config.vocab_size
         self.attention_head_size = model_config.attention_head_size
-        self.input_params = float(model_params[0])
-        self.output_params = float(model_params[-1])
-        self.transformer_params = float(model_params[1])
+        self.input_params = float(model_params[0]) # 第一层参数
+        self.output_params = float(model_params[-1]) # 最后一层参数
+        self.transformer_params = float(model_params[1]) # trnasformer层参数
 
     def get_num_layers(self):
         return self.num_layers
-
+    # 获取激活值大小
     def get_activation_size(self, layer_id, batch_size, tp_deg):
         if layer_id == (self.num_layers - 1):
             return batch_size * self.sequence_length * self.vocab_size / tp_deg
         return batch_size * self.sequence_length * self.hidden_size
-
+    # 返回参数总大小
     def get_parameter_size(self, tp_deg):
         parameters = [self.input_params/tp_deg]
         parameters += [self.transformer_params/tp_deg for i in range(self.num_layers-2)]
         parameters.append(self.output_params/tp_deg)
         return parameters
-
+    # 获取特定连续层的参数总量
     def get_parameter_size_by_stage(self, tp_deg, start_layer_id, end_layer_id):
         num_transformer_layer = end_layer_id - start_layer_id
         parameters = 0
