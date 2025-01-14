@@ -29,7 +29,7 @@ def _add_gpt_model_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPar
 
 def _add_cluster_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument('--hostfile_path') # hostfile：ip 和 gpu 数量
-    parser.add_argument('--clusterfile_path') # clusterfile：节点的 GPU 显存通信等指标
+    parser.add_argument('--clusterfile_path') # clusterfile：节点的 GPU 显存通信速度等指标
     return parser
 
 
@@ -44,6 +44,6 @@ def _add_hetspeed_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     parser.add_argument('--max_profiled_tp_degree', type=int) # 最大 TP
     parser.add_argument('--max_profiled_batch_size', type=int) # 最大 batchsize
     parser.add_argument('--min_group_scale_variance', type=int) # 控制设备组内的 GPU 数量
-    parser.add_argument('--max_permute_len', type=int) # 控制设备组数量
+    parser.add_argument('--max_permute_len', type=int) # 控制流水级数
 
     return parser

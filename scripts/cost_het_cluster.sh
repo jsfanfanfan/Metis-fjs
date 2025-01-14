@@ -1,16 +1,20 @@
 # Copyright 2024 Samsung Electronics Co., Ltd. All Rights Reserved
 #!/bin/bash
-# 工作目录切换到脚本的目录下
+# $0 是一个 Shell 脚本内置变量，表示当前脚本的文件名（包括路径）
+# dirname 是一个命令，用于提取路径的目录部分
+# 这条命令进入 shell 脚本文件所在的目录
 cd "$(dirname $"0")"
-
-for ARGUMENT in "$@" # 遍历每一个传入的参数
+# "$@" 表示传递给脚本的所有参数，每个参数是一个独立的字符串
+for ARGUMENT in "$@"
 do
+   # cut -f1 -d= 使用 = 作为分隔符，提取第一个字段，即参数的 KEY
    KEY=$(echo $ARGUMENT | cut -f1 -d=) # 提取出参数的 key
-
-   KEY_LENGTH=${#KEY} # 获取字符串长度
+   # 获取字符串长度
+   KEY_LENGTH=${#KEY}
+   # 字符串切片操作，从索引 $KEY_LENGTH+1 开始提取子串，跳过 KEY= 后的内容
    VALUE="${ARGUMENT:$KEY_LENGTH+1}" # 使用字符串切片提取 value
-
-   export "$KEY"="$VALUE" # 设置环境变量
+   # 设置环境变量
+   export "$KEY"="$VALUE"
 done
 
 model_options="
@@ -34,7 +38,8 @@ if [ "${MODEL_NAME}" == "GPT" ]; then
                 --vocab_size=${VOCAB_SIZE}
               "
 fi
-
+# ${HOME_DIR} 需要定义吗？
+HOME_DIR="."
 HOST_FILE_PATH="${HOME_DIR}/hostfile"
 CLUSTER_INFO_FILE_PATH="${HOME_DIR}/clusterfile.json"
 

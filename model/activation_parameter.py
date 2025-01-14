@@ -25,18 +25,18 @@ class GPTActivationAndParam:
 
     def get_num_layers(self):
         return self.num_layers
-    # 获取激活值大小
+    # 获取激活值大小，一般是 bs * seq_len * hidden
     def get_activation_size(self, layer_id, batch_size, tp_deg):
         if layer_id == (self.num_layers - 1):
             return batch_size * self.sequence_length * self.vocab_size / tp_deg
         return batch_size * self.sequence_length * self.hidden_size
-    # 返回参数总大小
+    # 返回 tp_deg 下每层参数大小的列表
     def get_parameter_size(self, tp_deg):
         parameters = [self.input_params/tp_deg]
         parameters += [self.transformer_params/tp_deg for i in range(self.num_layers-2)]
         parameters.append(self.output_params/tp_deg)
         return parameters
-    # 获取特定连续层的参数总量
+    # 获取 tp_deg 下特定连续层的参数总量
     def get_parameter_size_by_stage(self, tp_deg, start_layer_id, end_layer_id):
         num_transformer_layer = end_layer_id - start_layer_id
         parameters = 0

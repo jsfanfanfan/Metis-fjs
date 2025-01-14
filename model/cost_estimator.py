@@ -145,12 +145,20 @@ class HeteroCostEstimator(CostEstimator):
     def _get_specific_parameter_update_cost(self, optimizer_time: float, tp_deg: int, num_layers: int) -> float:
         ratio = num_layers / self.model_config.num_layers
         return optimizer_time / tp_deg * ratio
-    # 获取 start-end 这几层的计算时间
+    # 获取 [start,end) 这几层的计算时间
     def _get_execution_time(self, device_type: str, key: str, start_layer_id: int, end_layer_id: int) -> float:
         return sum(self.profile_data[f'DeviceType.{device_type}'][key]['time']['layer-computes'][start_layer_id:end_layer_id])
     # 获取 start-end 这几层在给定 intra-stage 策略下在异构设备组上的执行时间
     def _get_hetero_device_group_execution_time(self, device_types: List[str], intra_strategy: Tuple[int, int],
                                                 hetero_bs: List[int], start_layer_id: int, end_layer_id: int) -> List[float]:
+        """
+        Args:
+            device_types: 设备类型的列表；
+            intra_strategy: 流水级内的并行策略, (dp,tp) 的元组;
+            hetero_bs: 异构的 dp 组的 batchsize 列表;
+            start_layer_id: 开始层的 id;
+            end_layer_id: 结束层的 id;
+        """
         args = parse_args()
         dp_deg, tp_deg = intra_strategy
         execution_costs = []
@@ -165,18 +173,19 @@ class HeteroCostEstimator(CostEstimator):
             for h_mbs_slice in comb_h_mbs:
                 if h_mbs_slice > args.max_profiled_batch_size:
                     raise KeyError(f"batch_size({h_mbs_slice}) not found in profile_data")
-
+                # 调用 149 行
                 inner_dp_cost += self._get_execution_time(device_type, f'tp{tp_deg}_bs{h_mbs_slice}',
                                                           start_layer_id, end_layer_id)
             execution_costs.append(inner_dp_cost)
 
         return execution_costs
+    
     # 获取执行开销
     def _get_execution_cost(self, device_types: List[str], start_layer_id: int, end_layer_id:int,
                             intra_strategy: Tuple[int, int], gbs: int, batches: int) -> float:
         dp_deg, tp_deg = intra_strategy
 
-        # homogeneous device group
+        # 流水级的设备组是同构的
         if len(set(device_types)) == 1:
             device_type = device_types[0]
             key = f'tp{tp_deg}_bs{gbs // dp_deg // batches}'
@@ -188,20 +197,22 @@ class HeteroCostEstimator(CostEstimator):
             return execution_cost
         # heterogeneous device group
         else:
+            # model/load_balancer.py 147 行 数据负载均衡
             data_load_balancer = DataLoadBalancer(self.profile_data, self.model_config)
             hetero_bs = data_load_balancer.partition_data(device_types, intra_strategy, gbs // batches)
             print(f'data loadbalancer: {hetero_bs}')
-
+            # 调用 152 行 获取异构设备组的执行时间
             execution_costs = self._get_hetero_device_group_execution_time(device_types, intra_strategy, hetero_bs,
                                                                            start_layer_id, end_layer_id)
             return max(execution_costs)
+        
     # 得到最终的 cost
     def get_cost(self, plan: InterStagePlan, strategies: List[Tuple[int, int]], layer_partition: List[int],
                  rank_device_map: Dict[int, str]) -> float:
         print(f'node_sequence: {plan.node_sequence}, device_group: {plan.device_groups}, num_stage: {plan.num_stage}, '
               f'batches: {plan.batches}, gbs: {plan.gbs}, strategies: {strategies}, '
               f'layer_partition: {layer_partition}')
-        # cluster_bandwidth.py 71
+        # cluster_bandwidth.py 135 行
         cluster_bandwidth = HetClusterBandwidth(self.gpu_cluster, plan)
 
         lens = []
